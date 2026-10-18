@@ -1,5 +1,5 @@
 MIPS_BINUTILS_PREFIX ?= mips-linux-gnu-
-
+VERSION ?= intl
 BUILD_DIR := build
 TOOLS_DIR := tools
 
@@ -19,6 +19,8 @@ SPLAT             ?= $(PYTHON) -m splat split
 
 SPLAT_FLAGS       ?=
 
+GAME_CODE :=
+
 # Use relocations and abi fpr names in the dump
 #TODO test
 OBJDUMP_FLAGS := --disassemble --reloc --disassemble-zeroes -Mreg-names=32
@@ -28,13 +30,21 @@ RM_MDEBUG = $(OBJCOPY) --remove-section .mdebug $@
 OBJDUMP_CMD = $(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
 OBJCOPY_BIN = $(OBJCOPY) -O binary $@ $@.bin
 
+ifeq ($(VERSION), intl)
+  GAME_CODE = SLPS_250.88
+else ifeq ($(VERSION), us_alpha)
+  GAME_CODE = SLUS_203.12
+else
+  $(error Unsupported version $(VERSON))
+endif
+
 #### Files ####
 
 # ROM image
-ROM      := $(BUILD_DIR)/SLPS_250.88.rom
+ROM      := $(BUILD_DIR)/$(GAME_CODE).rom
 ELF      := $(ROM:.rom=.elf)
 MAP      := $(ROM:.rom=.map)
-LDSCRIPT := SLPS_250.88.ld
+LDSCRIPT := $(GAME_CODE).ld
 
 SRC_DIRS := $(shell find src -type d)
 ASM_DIRS := $(shell find asm -type d -not -path "asm/nonmatchings*")
@@ -77,7 +87,7 @@ diff-init: all
 
 extract:
 	$(RM) -r asm/$(VERSION) bin/$(VERSION)
-	$(SPLAT) SLPS_250.88.yaml $(SPLAT_FLAGS)
+	$(SPLAT) $(GAME_CODE).yaml $(SPLAT_FLAGS)
 
 init:
 	$(MAKE) distclean
@@ -89,7 +99,7 @@ init:
 #TODO better padding than hard-coded end address
 setup: venv
 	#$(MAKE) -C tools
-	$(OBJCOPY) -O binary --gap-fill=0x00 --pad-to 0x56A300 SLPS_250.88 SLPS_250.88.rom
+	$(OBJCOPY) -O binary --gap-fill=0x00 --pad-to 0x56A300 $(GAME_CODE) $(GAME_CODE).rom
 
 venv:
 # Create the virtual environment if it doesn't exist.
