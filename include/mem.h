@@ -3,7 +3,7 @@
 
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
-// Block owner IDs (MemControlBlock.attr.bits.owner).
+// Block owner IDs (MemControlBlock.attr.owner).
 // Callers of Mem_Alloc and friends pass the owner minus one; the stored value indexes sMemOwnerNames in mem.c.
 // These defines should only be used inside the allocate. External users should use the enum `AllocOwner`
 #define MEM_OWNER_FREE 0x0 // Block is free
@@ -58,23 +58,17 @@ typedef enum AllocOwner {
 typedef struct MemControlBlock_t {
     /* 0x00 */ struct MemControlBlock_t* next;
     /* 0x04 */ struct MemControlBlock_t* prev;
-    /* 0x08 */ union {
-        struct {
-            unsigned int checkSum : 16;   // Set when `readOnly` is set
-            unsigned int debugIndex : 11; // Index into MEM_DEBUG_INFO, 0 when the block has no name
-            unsigned int subType : 5;     // Further splits the owner 7 statistics in Mem_GetUsage
-        } bits;
-        unsigned int raw;
+    /* 0x08 */ struct {
+        unsigned int checkSum : 16;   // Set when `readOnly` is set
+        unsigned int debugIndex : 11; // Index into MEM_DEBUG_INFO, 0 when the block has no name
+        unsigned int subType : 5;     // Further splits the owner 7 statistics in Mem_GetUsage
     } info;
-    /* 0x0C */ union {
-        struct {
-            unsigned int owner : 4;    // MEM_OWNER_* or a caller's owner ID
-            unsigned int ra : 22;      // Word address of the allocating call, from Mem_SaveRA
-            unsigned int readOnly : 1; // Calculates a checksum when set.
-            unsigned int heapIdx : 2;
-            unsigned int unk29 : 3; // Only ever cleared
-        } bits;
-        unsigned raw;
+    /* 0x0C */ struct {
+        unsigned int owner : 4;    // MEM_OWNER_* or a caller's owner ID
+        unsigned int ra : 22;      // Word address of the allocating call, from Mem_SaveRA
+        unsigned int readOnly : 1; // Calculates a checksum when set.
+        unsigned int heapIdx : 2;
+        unsigned int unk29 : 3; // Only ever cleared
     } attr;
 } MemControlBlock; // size = 0x10
 
